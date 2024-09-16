@@ -1,0 +1,132 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星途科技</title>
+</head>
+<body>
+    <div>
+        <span>输入MAC地址：</span>
+        <input id="in-mac" value="30:AE:A4:A0:E2:7D"></input>
+    </div>
+    <div style="margin-top: 10px;">
+        <span>输入RAW数据：</span>
+        <input id="in-raw" style="width: 1000px;" 
+            value="0x02010617FF0001B50002381EACC4000000120610A1DE011000000003033CFE"></input>
+    </div>
+    <div style="margin-top: 10px;" onclick="btClick()">
+        <button>生成</button>
+    </div> 
+    <div>
+        <div id="text-pkt-at" style="margin-top: 10px;">XXXXX</div>
+        <div id="text-res-at" style="margin-top: 10px;">XXXXX</div>
+        <div id="text-mac-at" style="margin-top: 10px;">XXXXX</div>
+    </div>
+    <div>
+        <a href="">星途科技    Q群:470085081</a>
+    </div>
+
+    <script>
+        function btClick(){
+        
+    var testMac = document.getElementById('in-mac').value.replace(/:/g, ''); // 去除MAC地址中的冒号
+    var testRaw = document.getElementById('in-raw').value
+
+    if(testMac.length !== 12){
+        alert('MAC地址长度错误');
+        return;
+    }
+    if (!new RegExp("^[0-9a-fA-F]*$").test(testMac)) {
+        alert("MAC地址格式错误，只能是0-9,a-f,A-F");
+        return;
+    }
+
+            if(testRaw.substring(0,2)==='0x'){
+                testRaw = testRaw.substring(2)
+            }
+            if(testRaw.length>124){
+                alert("RAW数据超过长度范围")
+                return
+            }
+            if((testRaw.length%2)!==0){
+                alert("RAW数据长度错误")
+                return
+            }
+            if (!new RegExp("^[0-9a-fA-F]*$").test(testRaw)) {
+                alert("RAW数据格式错误，只能是0-9,a-f,A-F")
+                return
+            }
+            
+            var testData = new Array();
+            for(var k=0;k<20;k++){
+                testData[k]=new Array();
+            }
+
+            var rawSize = testRaw.length/2
+            for (var i = 0; i < rawSize; i++) {
+                testData[0][i] = parseInt(testRaw.substr(2 * i, 2), 16)
+            }
+            
+            var parseIndex = 0
+            var packetNum = 0
+            for (var j=0;j<rawSize;j++){
+                var tempLen = testData[0][j]
+                for(var jj=0;jj<(tempLen+1);jj++){
+                    testData[1+packetNum][jj] = testData[0][j]
+                    j++
+                }
+                j--
+                packetNum++
+            }
+            console.log(testData)
+
+            if(packetNum<2){
+                alert("packet包数量错误")
+                return
+            }
+            // console.log(packetNum)
+
+            var advPktString = ""
+            var advPktLen = 0
+            var advPktNum = 0
+            for(var s=0;s<(packetNum-1);s++){
+                advPktLen += (testData[1+s][0]+1)
+                if(advPktLen>31)break;
+                for(var jj=0;jj<(testData[1+s][0]+1);jj++){
+                    advPktString += testData[1+s][jj].toString(16).padStart(2,'0').toUpperCase()
+                }
+                advPktNum++
+            }
+            console.log(advPktString) 
+
+            var scanPktString = ""
+            var scanPktLen = 0
+            var scanPktNum = 0
+            for(var s=advPktNum;s<(packetNum);s++){
+                scanPktLen += (testData[1+s][0]+1)
+                if(scanPktLen>31)break;
+                console.log('ttt')
+                for(var jj=0;jj<(testData[1+s][0]+1);jj++){
+                    scanPktString += testData[1+s][jj].toString(16).padStart(2,'0').toUpperCase()
+                }
+                scanPktNum++
+                
+            }
+            console.log(scanPktString) 
+
+
+            document.getElementById("text-pkt-at").innerText = 'AT+ADVPKT='+advPktString
+            document.getElementById("text-res-at").innerText = 'AT+SCANRES='+scanPktString
+            document.getElementById("text-mac-at").innerText = 'AT+MAC='+testMac
+            
+
+ 
+ 
+            // alert('testMac:'+testMac);
+            // alert('testRaw:'+testRaw);
+
+        }
+    </script>
+</body>
+</html>
